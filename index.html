@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <title>Totobosta · Palpites e acertos</title>
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>💩 Totobosta</h1>
+        <div class="sub" id="upd"></div>
+      </div>
+      <div id="adm" hidden><button id="up">Atualizar dados (carregar Excel)</button><input id="f" type="file"
+          accept=".xlsx" hidden></div>
+    </header>
+    <div id="msg" class="note"></div>
+    <div class="kp" id="kp"></div>
+    <section>
+      <h2>Classificação geral</h2>
+      <div class="sc" id="rk"></div>
+      <div class="note">Média = acertos ÷ jogos já apurados (13 jogos + Super 14 por boletim).</div>
+    </section>
+    <section>
+      <h2>Acertos por boletim</h2>
+      <div class="sc" id="gr"></div>
+      <div class="note">★ = melhor do boletim (empates partilham). Clica numa data para ver o detalhe.</div>
+    </section>
+    <section id="det">
+      <h2>Detalhe do boletim</h2>
+      <div class="tb"><select id="sel"></select><span id="st" class="sub"></span></div>
+      <div class="sc" id="dt"></div>
+      <div class="note">O Super 14 é um palpite único, comum a todos os jogadores.</div>
+    </section>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="js/script.js"></script>
+</body>
+
+</html>
