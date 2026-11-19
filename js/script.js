@@ -9,7 +9,7 @@
     const key = id => id.slice(4) + id.slice(2, 4) + id.slice(0, 2);
     let S, sel = '';
 
-    function load(d) {git
+    function load(d) {
       const P = d.players;
       const sheets = d.sheets.map(s => ({ id: s.id, g: s.g.map(x => [x[0], x[1], [...x[2]], x[3]]) })).sort((a, b) => key(a.id) < key(b.id) ? -1 : 1);
       sheets.forEach(s => {
