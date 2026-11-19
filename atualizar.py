@@ -127,6 +127,10 @@ def main():
     if "--push" in sys.argv:
         msg = "Atualiza resultados " + datetime.date.today().strftime("%d/%m/%Y")
         subprocess.run(["git", "add", str(ficheiro)], cwd=PASTA, check=True)
+        # Se nada mudou face ao último commit, não há nada para enviar
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=PASTA).returncode == 0:
+            print("Sem alterações: os dados já estavam atualizados no repositório. Nada a enviar.")
+            return
         subprocess.run(["git", "commit", "-m", msg], cwd=PASTA, check=True)
         subprocess.run(["git", "push"], cwd=PASTA, check=True)
         print("Enviado para o GitHub.")
