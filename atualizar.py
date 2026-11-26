@@ -73,7 +73,7 @@ def encontrar_ficheiro():
     candidatos = [PASTA / "js" / "script.js", PASTA / "script.js", HTML]
     candidatos += [p for p in PASTA.rglob("*.js") if "node_modules" not in p.parts]
     for p in candidatos:
-        if p.is_file() and re.search(r"const\s+RAW\s*=", p.read_text(encoding="utf-8")):
+        if p.is_file() and re.search(r"const\s+RAW\s*=\s*\{", p.read_text(encoding="utf-8")):
             return p
     sys.exit("Não encontrei 'const RAW' em nenhum ficheiro (index.html, js/script.js, ...).")
 
