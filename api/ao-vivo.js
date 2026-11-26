@@ -37,8 +37,9 @@ module.exports = async (req, res) => {
       fh: f.score && f.score.fulltime ? f.score.fulltime.home : null,
       fa: f.score && f.score.fulltime ? f.score.fulltime.away : null,
     }));
-    // Cache na CDN da Vercel: no máximo 1 pedido à API por dia/4 min, seja quantos forem os visitantes
-    res.setHeader('Cache-Control', 's-maxage=240, stale-while-revalidate=120');
+    // Cache na CDN: dias passados mudam pouco (1 h), hoje atualiza de 4 em 4 min, dias futuros 15 min
+    const seg = dif === 0 ? 240 : (Date.parse(dia) < Date.parse(hoje()) ? 3600 : 900);
+    res.setHeader('Cache-Control', `s-maxage=${seg}, stale-while-revalidate=120`);
     return res.status(200).json({
       data: dia,
       atualizado: new Date().toISOString(),

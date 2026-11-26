@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <title>Totobosta · Ao vivo</title>
+  <style>
+    .on { color: var(--ko); font-weight: 700 }
+    .fim { color: var(--mut) }
+    .pl { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap }
+  </style>
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>⚽ Ao vivo</h1>
+        <div class="sub" id="sub"></div>
+      </div>
+      <a class="btn" href="index.html">← Voltar</a>
+    </header>
+    <div id="msg" class="note"></div>
+    <section>
+      <h2>Resultados do boletim</h2>
+      <div class="sc" id="jg"></div>
+    </section>
+    <section>
+      <h2>Classificação do boletim</h2>
+      <div class="sc" id="cl"></div>
+      <div class="note" id="nt"></div>
+    </section>
+  </main>
+  <script src="js/dados.js"></script>
+  <script src="js/ao-vivo.js"></script>
+</body>
+
+</html>
