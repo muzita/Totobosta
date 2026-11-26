@@ -13,6 +13,13 @@ const B = sheets.find(s => s.id === new URLSearchParams(location.search).get('b'
 const P = RAW.players;
 const jogos = B.g.map(g => ({ n: g[0], m: g[1], p: [...g[2]], r: g[3] }));
 
+// ---- Memória dos placares já terminados (no teu browser) ----
+// A API gratuita só devolve ontem/hoje/amanhã; guardar os placares quando aparecem permite mostrá-los depois.
+const CK = 'totobosta-placares-' + B.id;
+let memoria = {};
+try { memoria = JSON.parse(localStorage.getItem(CK) || '{}') } catch (e) { }
+const lembrado = k => memoria[k] ? { ...memoria[k], fase: 'fim' } : null;
+
 // ---- Associar nomes do boletim aos da API ----
 const FIM = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']), VIVO = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
 const STOP = new Set(['fc', 'sc', 'cf', 'cd', 'ac', 'ad', 'ud', 'sl', 'cp', 'sad', 'de', 'do', 'da', 'the', 'club', '1932']);
@@ -30,7 +37,7 @@ const ALIAS = {
   'romenia': 'romania', 'dinamarca': 'denmark', 'noruega': 'norway', 'hungria': 'hungary', 'irlanda norte': 'northern ireland',
   'irlanda': 'ireland', 'polonia': 'poland', 'suecia': 'sweden', 'ucrania': 'ukraine',
   'sparta praga': 'sparta praha', 'slavia praga': 'slavia praha', 'olympiacos': 'olympiakos', 'salzburgo': 'salzburg',
-  'copenhaga': 'copenhagen', 'basileia': 'basel', 'estrela vermelha': 'crvena zvezda', 'dinamo kiev': 'dynamo kyiv' , 'fcporto': 'fc porto', 'feyenoord': 'feyenoord', 'bor. dortmund': 'borussia dortmund'
+  'copenhaga': 'copenhagen', 'basileia': 'basel', 'estrela vermelha': 'crvena zvezda', 'dinamo kiev': 'dynamo kyiv'
 };
 const toks = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9 ]/g, ' ')
   .split(/\s+/).filter(Boolean).map(t => TOK[t] || t).filter(t => !STOP.has(t));
@@ -70,7 +77,7 @@ function estado(f, inv) {
 // ---- Desenho ----
 function desenhar(est, info) {
   const todos = jogos.map((g, k) => {
-    const e = est[k] || { score: '—', est: g.r ? 'Oficial' : 'Sem dados', fase: g.r ? 'fim' : 'pre', out: '' };
+    const e = est[k] || lembrado(k) || { score: '—', est: g.r ? 'Oficial' : 'Sem dados', fase: g.r ? 'fim' : 'pre', out: '' };
     return { ...e, o: g.r || e.out };   // resultado oficial da folha tem prioridade
   });
   $('jg').innerHTML = '<table><thead><tr><th>#</th><th>Jogo</th><th>Resultado</th><th>Estado</th><th>1X2</th></tr></thead><tbody>' +
@@ -99,7 +106,9 @@ async function atualizar() {
       jogos.forEach((g, k) => { if (!est[k]) { const m = acharJogo(g.m, fx); if (m) est[k] = estado(m.f, m.inv) } });
     } catch (e) { erro = e.message }
   }
-  const faltam = jogos.filter((g, k) => !est[k] && !g.r).map(g => g.m);
+  est.forEach((e, k) => { if (e && e.fase === 'fim') memoria[k] = { score: e.score, est: e.est, out: e.out } });
+  try { localStorage.setItem(CK, JSON.stringify(memoria)) } catch (e) { }
+  const faltam = jogos.filter((g, k) => !est[k] && !lembrado(k) && !g.r).map(g => g.m);
   $('msg').textContent = [erro && 'Aviso da API: ' + erro, faltam.length && 'Sem correspondência: ' + faltam.join('; ')].filter(Boolean).join(' — ');
   desenhar(est, 'atualizado às ' + hhmm(new Date()) + (rest ? ' · pedidos restantes hoje: ' + rest : ''));
 }
