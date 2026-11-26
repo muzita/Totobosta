@@ -30,7 +30,7 @@ const ALIAS = {
   'romenia': 'romania', 'dinamarca': 'denmark', 'noruega': 'norway', 'hungria': 'hungary', 'irlanda norte': 'northern ireland',
   'irlanda': 'ireland', 'polonia': 'poland', 'suecia': 'sweden', 'ucrania': 'ukraine',
   'sparta praga': 'sparta praha', 'slavia praga': 'slavia praha', 'olympiacos': 'olympiakos', 'salzburgo': 'salzburg',
-  'copenhaga': 'copenhagen', 'basileia': 'basel', 'estrela vermelha': 'crvena zvezda', 'dinamo kiev': 'dynamo kyiv' , 'fcporto': 'feyenoord'
+  'copenhaga': 'copenhagen', 'basileia': 'basel', 'estrela vermelha': 'crvena zvezda', 'dinamo kiev': 'dynamo kyiv' , 'fcporto': 'fc porto', 'feyenoord': 'feyenoord', 'bor. dortmund': 'borussia dortmund'
 };
 const toks = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9 ]/g, ' ')
   .split(/\s+/).filter(Boolean).map(t => TOK[t] || t).filter(t => !STOP.has(t));
