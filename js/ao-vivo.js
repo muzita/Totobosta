@@ -28,7 +28,9 @@ const ALIAS = {
   'escocia': 'scotland', 'macedonia norte': 'north macedonia', 'eslovaquia': 'slovakia', 'ilhas faroe': 'faroe islands',
   'eslovenia': 'slovenia', 'suica': 'switzerland', 'italia': 'italy', 'franca': 'france', 'bosnia herzegovina': 'bosnia',
   'romenia': 'romania', 'dinamarca': 'denmark', 'noruega': 'norway', 'hungria': 'hungary', 'irlanda norte': 'northern ireland',
-  'irlanda': 'ireland', 'polonia': 'poland', 'suecia': 'sweden', 'ucrania': 'ukraine'
+  'irlanda': 'ireland', 'polonia': 'poland', 'suecia': 'sweden', 'ucrania': 'ukraine',
+  'sparta praga': 'sparta praha', 'slavia praga': 'slavia praha', 'olympiacos': 'olympiakos', 'salzburgo': 'salzburg',
+  'copenhaga': 'copenhagen', 'basileia': 'basel', 'estrela vermelha': 'crvena zvezda', 'dinamo kiev': 'dynamo kyiv'
 };
 const toks = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9 ]/g, ' ')
   .split(/\s+/).filter(Boolean).map(t => TOK[t] || t).filter(t => !STOP.has(t));
@@ -86,9 +88,8 @@ function desenhar(est, info) {
 }
 
 async function atualizar() {
-  const est = jogos.map(() => null); let rest = null;
-  $('msg').textContent = '';
-  for (const off of [0, -1, 1, -2, 2]) {          // hoje, ontem, amanhã, ...: pára quando todos os jogos estiverem associados
+  const est = jogos.map(() => null); let rest = null, erro = '';
+  for (const off of [0, -1, 1]) {   // hoje, ontem, amanhã (o plano gratuito da API só permite estes dias)
     if (est.every(Boolean)) break;
     try {
       const r = await fetch('/api/ao-vivo?data=' + somaDias(hoje(), off)), j = await r.json();
@@ -96,10 +97,10 @@ async function atualizar() {
       rest = j.restantes || rest;
       const fx = j.jogos.map(f => ({ ...f, hk: nome(f.h), ak: nome(f.a) }));
       jogos.forEach((g, k) => { if (!est[k]) { const m = acharJogo(g.m, fx); if (m) est[k] = estado(m.f, m.inv) } });
-    } catch (e) { $('msg').textContent = 'Não foi possível obter resultados ao vivo (' + e.message + ').'; break }
+    } catch (e) { erro = e.message }
   }
   const faltam = jogos.filter((g, k) => !est[k] && !g.r).map(g => g.m);
-  if (faltam.length && !$('msg').textContent) $('msg').textContent = 'Sem correspondência na API: ' + faltam.join('; ');
+  $('msg').textContent = [erro && 'Aviso da API: ' + erro, faltam.length && 'Sem correspondência: ' + faltam.join('; ')].filter(Boolean).join(' — ');
   desenhar(est, 'atualizado às ' + hhmm(new Date()) + (rest ? ' · pedidos restantes hoje: ' + rest : ''));
 }
 

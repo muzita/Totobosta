@@ -11,13 +11,13 @@ module.exports = async (req, res) => {
     return res.status(500).json({ erro: 'Falta a variável API_FOOTBALL_KEY na Vercel.' });
   }
 
-  // Só aceita datas até 3 dias antes/depois de hoje (evita gastar a quota com datas aleatórias)
+  // Só aceita ontem, hoje e amanhã: é o intervalo que o plano gratuito da API permite
   const pedida = String(req.query.data || '');
   const dia = /^\d{4}-\d{2}-\d{2}$/.test(pedida) ? pedida : hoje();
   const dif = Math.abs(Date.parse(dia) - Date.parse(hoje())) / 864e5;
-  if (!(dif <= 3)) {
+  if (!(dif <= 1)) {
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(400).json({ erro: 'Data fora do intervalo permitido (±3 dias).' });
+    return res.status(400).json({ erro: 'Data fora do intervalo permitido (ontem a amanhã).' });
   }
 
   try {
