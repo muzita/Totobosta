@@ -47,14 +47,27 @@
       $('sel').value = sel;
       detail();
     }
-
+    const live=m=>'https://www.google.com/search?q='+encodeURIComponent(m.replace(/-/g,' ')+' resultado ao vivo');
     function detail() {
       const s = S.sheets.find(x => x.id === sel);
       if (!s) { $('dt').innerHTML = ''; $('st').textContent = ''; return }
       $('st').textContent = s.total ? `${s.total} jogos apurados` : (s.has ? 'A aguardar resultados' : 'Ainda sem palpites');
-      $('dt').innerHTML = '<table class="d"><thead><tr><th>#</th><th>Jogo</th>' + S.P.map(n => `<th>${E(n)}</th>`).join('') + '<th>Res.</th></tr></thead><tbody>' +
-        s.g.map(g => `<tr><td>${E(g[0])}</td><td class="m" title="${E(g[1])}">${E(g[1])}</td>` + g[2].map(p => `<td class="${g[3] ? (p === g[3] ? 'h' : 'x') : ''}">${E(p)}</td>`).join('') + `<td class="r">${E(g[3] || '')}</td></tr>`).join('') +
-        '</tbody>' + (s.total ? '<tfoot><tr><td></td><td style="text-align:left">Acertos</td>' + s.hits.map((h, i) => `<td class="${s.win[i] ? 'w' : ''}">${h}/${s.total}${s.win[i] ? ' ★' : ''}</td>`).join('') + '<td></td></tr></tfoot>' : '') + '</table>';
+      const lv = !!(LIVE && LIVE.sheet === s.id), L = lv ? LIVE.map : {};
+      const liveHits = S.P.map(() => 0); let liveN = 0;
+      const rows = s.g.map((g, k) => {
+        const f = L[k], o = g[3] || (f && f.out) || '', prov = !g[3] && !!o;
+        if (o) { liveN++; g[2].forEach((p, i) => { if (p === o) liveHits[i]++ }) }
+        return `<tr><td>${E(g[0])}</td><td class="m" title="${E(g[1])}">${E(g[1])}</td>` +
+          g[2].map(p => `<td class="${o ? (p === o ? (prov ? 'lh' : 'h') : (prov ? 'lx' : 'x')) : ''}">${E(p)}</td>`).join('') +
+          (lv ? `<td class="lvc ${f && f.on ? 'lvon' : ''}">${f ? E(f.txt) : '—'}</td>` : '') +
+          `<td class="r">${E(g[3] || '')}</td><td><a class="lv" href="${live(g[1])}" target="_blank" rel="noopener" title="Ver ao vivo">↗</a></td></tr>`;
+      }).join('');
+      const cauda = lv ? '<td></td><td></td><td></td>' : '<td></td><td></td>';
+      const foot = (s.total ? '<tr><td></td><td style="text-align:left">Acertos</td>' + s.hits.map((h, i) => `<td class="${s.win[i] ? 'w' : ''}">${h}/${s.total}${s.win[i] ? ' ★' : ''}</td>`).join('') + cauda + '</tr>' : '') +
+        (lv && liveN ? '<tr class="lvr"><td></td><td style="text-align:left">Ao vivo (provisório)</td>' + liveHits.map(h => `<td>${h}/${liveN}</td>`).join('') + cauda + '</tr>' : '');
+      $('dt').innerHTML = '<table class="d"><thead><tr><th>#</th><th>Jogo</th>' + S.P.map(n => `<th>${E(n)}</th>`).join('') +
+        (lv ? '<th>Ao vivo</th>' : '') + '<th>Res.</th><th></th></tr></thead><tbody>' + rows + '</tbody>' + (foot ? '<tfoot>' + foot + '</tfoot>' : '') + '</table>' +
+        (lv && LIVE.faltam.length ? '<div class="note">Sem correspondência na API: ' + E(LIVE.faltam.join('; ')) + '</div>' : '');
     }
 
     $('sel').onchange = e => { sel = e.target.value; detail() };
@@ -101,4 +114,74 @@
       fr.readAsArrayBuffer(f); e.target.value = '';
     };
     ;(async () => { try { const u = await claude.use('user'); if (u && await u.canEdit()) $('adm').hidden = false } catch (e) { } })();
+    // ===== AO VIVO (API-Football via /api/ao-vivo) =====
+    let LIVE = null;
+    const hoje = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Lisbon' });
+    const FIM = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']), VIVO = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+    const STOP = new Set(['fc', 'sc', 'cf', 'cd', 'ac', 'ad', 'ud', 'sl', 'cp', 'sad', 'de', 'do', 'da', 'the', 'club', '1932']);
+    const TOK = { sp: 'sporting', atl: 'atletico', bor: 'borussia', desp: 'desportivo', utd: 'united', e: 'estrela', v: 'vitoria', herz: 'herzegovina', nott: 'nottingham', d: 'donetsk' };
+    // Nomes do boletim -> nome usado pela API (já normalizados, sem acentos). Acrescenta aqui os que falharem.
+    const ALIAS = {
+      'afs': 'avs', 'sevilha': 'sevilla', 'bayern munique': 'bayern munich', 'estugarda': 'stuttgart', 'psg': 'paris saint germain',
+      'villareal': 'villarreal', 'napoles': 'napoli', 'inter milao': 'inter', 'genova': 'genoa', 'bolonha': 'bologna',
+      'atletico mineiro': 'atletico mg', 'betis sevilha': 'betis', 'real betis': 'betis', 'aek atenas': 'aek athens', 'newscastle': 'newcastle',
+      'pais gales': 'wales', 'inglaterra': 'england', 'croacia': 'croatia', 'turquia': 'turkey', 'belgica': 'belgium', 'chequia': 'czech republic',
+      'espanha': 'spain', 'paises baixos': 'netherlands', 'grecia': 'greece', 'servia': 'serbia', 'alemanha': 'germany', 'chipre': 'cyprus',
+      'albania': 'albania', 'finlandia': 'finland', 'moldavia': 'moldova', 'cazaquistao': 'kazakhstan', 'islandia': 'iceland',
+      'luxemburgo': 'luxembourg', 'estonia': 'estonia', 'escocia': 'scotland', 'macedonia norte': 'north macedonia', 'eslovaquia': 'slovakia',
+      'ilhas faroe': 'faroe islands', 'eslovenia': 'slovenia', 'suica': 'switzerland', 'italia': 'italy', 'franca': 'france',
+      'bosnia herzegovina': 'bosnia', 'romenia': 'romania', 'dinamarca': 'denmark', 'noruega': 'norway', 'hungria': 'hungary',
+      'irlanda norte': 'northern ireland', 'irlanda': 'ireland', 'polonia': 'poland', 'suecia': 'sweden', 'ucrania': 'ukraine',
+      'georgia': 'georgia', 'austria': 'austria', 'israel': 'israel', 'bulgaria': 'bulgaria', 'armenia': 'armenia'
+    };
+    const toks = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9 ]/g, ' ')
+      .split(/\s+/).filter(Boolean).map(t => TOK[t] || t).filter(t => !STOP.has(t));
+    const nome = s => { const t = toks(s), a = ALIAS[t.join(' ')]; return a ? a.split(' ') : t };
+    const marca = t => t.filter(x => /^u\d+$|^w$|^women$|^reserves$|^ii$/.test(x)).join();
+    function sim(a, b) { // 2 = igual, 1 = um contém o outro, 0 = não bate
+      if (marca(a) !== marca(b)) return 0;
+      const A = new Set(a), B = new Set(b); let n = 0; A.forEach(x => { if (B.has(x)) n++ });
+      if (!n) return 0;
+      if (n === A.size && n === B.size) return 2;
+      return n === Math.min(A.size, B.size) ? 1 : 0;
+    }
+    function acharJogo(txt, fx) {
+      const p = txt.replace(/\s+[a-z]\)\s*$/i, '').trim().split(/\s*[-–]\s*/); let best = null;
+      for (let i = 1; i < p.length; i++) {
+        const h = nome(p.slice(0, i).join('-')), a = nome(p.slice(i).join('-'));
+        for (const f of fx) for (const inv of [false, true]) {
+          const s1 = sim(h, inv ? f.ak : f.hk), s2 = sim(a, inv ? f.hk : f.ak);
+          if (s1 && s2) { const sc = s1 + s2 - (inv ? .5 : 0); if (!best || sc > best.sc) best = { sc, f, inv } }
+        }
+      }
+      return best;
+    }
+    const res = (a, b) => a > b ? '1' : a < b ? '2' : 'X';
+    function estado(f, inv) {
+      const x90 = ['AET', 'PEN', 'ET', 'BT', 'P'].includes(f.s) && f.fh != null; // resultado aos 90 minutos
+      let gh = x90 ? f.fh : f.gh, ga = x90 ? f.fa : f.ga;
+      if (inv) [gh, ga] = [ga, gh];
+      if (FIM.has(f.s)) return { txt: `${gh}-${ga} FIM${x90 ? " (90')" : ''}`, out: res(gh, ga), on: false };
+      if (VIVO.has(f.s)) { gh = gh ?? 0; ga = ga ?? 0; return { txt: `${gh}-${ga} ${f.s === 'HT' ? 'int.' : (f.m || '') + "'"}`, out: res(gh, ga), on: true } }
+      if (f.s === 'PST') return { txt: 'Adiado', out: '', on: false };
+      if (f.s === 'CANC' || f.s === 'ABD') return { txt: 'Cancelado', out: '', on: false };
+      return { txt: new Date(f.t).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' }), out: '', on: false };
+    }
+    async function aoVivo() {
+      const s = S.sheets.find(x => x.id === sel), st = $('lvs'); if (!s || !st) return;
+      st.textContent = 'A carregar…';
+      try {
+        const dia = ($('lvd') && $('lvd').value) || hoje();
+        const r = await fetch('/api/ao-vivo?data=' + dia), j = await r.json();
+        if (!r.ok || j.erro) throw new Error(j.erro || r.status);
+        const fx = j.jogos.map(f => ({ ...f, hk: nome(f.h), ak: nome(f.a) }));
+        const map = {}, faltam = []; let n = 0;
+        s.g.forEach((g, k) => { const m = acharJogo(g[1], fx); if (m) { map[k] = estado(m.f, m.inv); n++ } else faltam.push(g[1]) });
+        LIVE = { sheet: s.id, map, faltam };
+        st.textContent = `${n}/${s.g.length} jogos encontrados em ${dia.split('-').reverse().join('/')} · ${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` + (j.restantes ? ` · pedidos restantes hoje: ${j.restantes}` : '');
+        detail();
+      } catch (err) { st.textContent = 'Erro: ' + err.message }
+    }
+    if ($('lv')) { $('lv').onclick = aoVivo; if ($('lvd')) $('lvd').value = hoje() }
+    setInterval(() => { if (LIVE && !document.hidden) aoVivo() }, 240000);
     load(RAW);
