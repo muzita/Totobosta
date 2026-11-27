@@ -264,3 +264,10 @@
     .d .lvc{white-space:nowrap;font-variant-numeric:tabular-nums}
     .lvon{color:var(--ko);font-weight:700}
     .d .lvr td{font-weight:700;border-top:2px solid var(--bd)}
+
+    .d { table-layout: fixed; width: 100%; min-width: 850px }
+.d th:nth-child(1) { width: 44px }    /* # */
+.d th:nth-child(2) { width: 230px }   /* Jogo */
+.d td.m { max-width: none }
+.g { table-layout: fixed; width: 100%; min-width: 700px }
+.g th:first-child, .g td:first-child { width: 110px }   /* coluna dos nomes */
